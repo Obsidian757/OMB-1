@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Federal AI Use Case Inventory - Analysis Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .stat-card {
+            transition: transform 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-blue-900 text-white py-6 shadow-lg">
+        <div class="container mx-auto px-4">
+            <h1 class="text-3xl font-bold">Federal AI Use Case Inventory</h1>
+            <p class="text-blue-200 mt-1">2024 Analysis Dashboard</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <!-- Summary Stats -->
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Summary Statistics</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="stat-card bg-white rounded-lg shadow p-6">
+                    <div class="text-4xl font-bold text-blue-600">{{ summary.total_use_cases }}</div>
+                    <div class="text-gray-600 mt-1">Total Use Cases</div>
+                </div>
+                <div class="stat-card bg-white rounded-lg shadow p-6">
+                    <div class="text-4xl font-bold text-green-600">{{ summary.unique_agencies }}</div>
+                    <div class="text-gray-600 mt-1">Agencies Reporting</div>
+                </div>
+                <div class="stat-card bg-white rounded-lg shadow p-6">
+                    <div class="text-4xl font-bold text-red-600">{{ summary.high_impact_total }}</div>
+                    <div class="text-gray-600 mt-1">High-Impact Cases</div>
+                </div>
+                <div class="stat-card bg-white rounded-lg shadow p-6">
+                    <div class="text-4xl font-bold text-purple-600">
+                        {% if year_compare.growth_percent %}+{{ year_compare.growth_percent }}%{% else %}N/A{% endif %}
+                    </div>
+                    <div class="text-gray-600 mt-1">YoY Growth</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Year Comparison -->
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Year-over-Year Comparison</h2>
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                    <div>
+                        <div class="text-3xl font-bold text-gray-600">{{ year_compare.count_2023 }}</div>
+                        <div class="text-gray-500">2023 Use Cases</div>
+                    </div>
+                    <div>
+                        <div class="text-3xl font-bold text-blue-600">{{ year_compare.count_2024 }}</div>
+                        <div class="text-gray-500">2024 Use Cases</div>
+                    </div>
+                    <div>
+                        <div class="text-3xl font-bold text-green-600">+{{ year_compare.growth }}</div>
+                        <div class="text-gray-500">New Use Cases</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Impact Breakdown -->
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Impact Classification</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-white rounded-lg shadow p-6 border-l-4 border-yellow-500">
+                    <div class="text-2xl font-bold text-yellow-600">{{ summary.rights_impacting }}</div>
+                    <div class="text-gray-600 text-sm">Rights-Impacting</div>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6 border-l-4 border-orange-500">
+                    <div class="text-2xl font-bold text-orange-600">{{ summary.safety_impacting }}</div>
+                    <div class="text-gray-600 text-sm">Safety-Impacting</div>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6 border-l-4 border-red-500">
+                    <div class="text-2xl font-bold text-red-600">{{ summary.both_impacting }}</div>
+                    <div class="text-gray-600 text-sm">Both</div>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
+                    <div class="text-2xl font-bold text-green-600">{{ summary.neither_impacting }}</div>
+                    <div class="text-gray-600 text-sm">Neither</div>
+                </div>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Top Agencies -->
+            <section>
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Top Agencies by Use Case Count</h2>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="space-y-3">
+                        {% for agency in agencies %}
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-700 truncate flex-1 mr-4" title="{{ agency.agency }}">
+                                {{ agency.agency[:50] }}{% if agency.agency|length > 50 %}...{% endif %}
+                            </span>
+                            <div class="flex items-center">
+                                <div class="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                                    <div class="bg-blue-600 h-2 rounded-full"
+                                         style="width: {{ (agency.use_case_count / agencies[0].use_case_count * 100)|int }}%"></div>
+                                </div>
+                                <span class="font-semibold text-gray-800 w-12 text-right">{{ agency.use_case_count }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+
+            <!-- High-Impact by Agency -->
+            <section>
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">High-Impact Cases by Agency</h2>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="space-y-3">
+                        {% for item in impact_by_agency %}
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-700 truncate flex-1 mr-4" title="{{ item.agency }}">
+                                {{ item.agency[:50] }}{% if item.agency|length > 50 %}...{% endif %}
+                            </span>
+                            <div class="flex items-center">
+                                <div class="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                                    <div class="bg-red-500 h-2 rounded-full"
+                                         style="width: {{ (item.impacting_count / impact_by_agency[0].impacting_count * 100)|int }}%"></div>
+                                </div>
+                                <span class="font-semibold text-red-600 w-12 text-right">{{ item.impacting_count }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+
+            <!-- Topic Distribution -->
+            <section>
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Distribution by Topic Area</h2>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <canvas id="topicChart" height="300"></canvas>
+                </div>
+            </section>
+
+            <!-- Development Stages -->
+            <section>
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Development Stages</h2>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <canvas id="stageChart" height="300"></canvas>
+                </div>
+            </section>
+        </div>
+
+        <!-- Search Section -->
+        <section class="mt-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Search Use Cases</h2>
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex flex-col md:flex-row gap-4 mb-4">
+                    <input type="text" id="searchQuery" placeholder="Search by keyword..."
+                           class="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="text" id="agencyFilter" placeholder="Filter by agency..."
+                           class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button onclick="searchUseCases()"
+                            class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                        Search
+                    </button>
+                </div>
+                <div id="searchResults" class="mt-4"></div>
+            </div>
+        </section>
+
+        <!-- API Info -->
+        <section class="mt-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">API Endpoints</h2>
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div class="font-mono bg-gray-100 p-3 rounded">
+                        <span class="text-green-600">GET</span> /api/summary
+                    </div>
+                    <div class="font-mono bg-gray-100 p-3 rounded">
+                        <span class="text-green-600">GET</span> /api/agencies
+                    </div>
+                    <div class="font-mono bg-gray-100 p-3 rounded">
+                        <span class="text-green-600">GET</span> /api/topics
+                    </div>
+                    <div class="font-mono bg-gray-100 p-3 rounded">
+                        <span class="text-green-600">GET</span> /api/impact
+                    </div>
+                    <div class="font-mono bg-gray-100 p-3 rounded">
+                        <span class="text-green-600">GET</span> /api/search?q=keyword
+                    </div>
+                    <div class="font-mono bg-gray-100 p-3 rounded">
+                        <span class="text-green-600">GET</span> /api/compare-years
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-6 mt-8">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-gray-400">Federal AI Use Case Inventory Analysis Tool</p>
+            <p class="text-gray-500 text-sm mt-1">Data source: OMB Memorandum M-24-10 Agency Submissions</p>
+        </div>
+    </footer>
+
+    <script>
+        // Topic Chart
+        const topicData = {{ topics | tojson }};
+        if (topicData.length > 0) {
+            const topicCtx = document.getElementById('topicChart').getContext('2d');
+            new Chart(topicCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: topicData.map(t => t.topic_area ? t.topic_area.substring(0, 30) : 'Unknown'),
+                    datasets: [{
+                        data: topicData.map(t => t.count),
+                        backgroundColor: [
+                            '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
+                            '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#6366F1'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                boxWidth: 12,
+                                font: { size: 10 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Stage Chart
+        const stageData = {{ stages | tojson }};
+        if (stageData.length > 0) {
+            const stageCtx = document.getElementById('stageChart').getContext('2d');
+            new Chart(stageCtx, {
+                type: 'bar',
+                data: {
+                    labels: stageData.map(s => s.stage ? s.stage.substring(0, 25) : 'Unknown'),
+                    datasets: [{
+                        label: 'Use Cases',
+                        data: stageData.map(s => s.count),
+                        backgroundColor: '#3B82F6'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        // Search function
+        async function searchUseCases() {
+            const query = document.getElementById('searchQuery').value;
+            const agency = document.getElementById('agencyFilter').value;
+            const resultsDiv = document.getElementById('searchResults');
+
+            resultsDiv.innerHTML = '<p class="text-gray-500">Searching...</p>';
+
+            try {
+                const params = new URLSearchParams();
+                if (query) params.append('q', query);
+                if (agency) params.append('agency', agency);
+                params.append('limit', '20');
+
+                const response = await fetch(`/api/search?${params}`);
+                const data = await response.json();
+
+                if (data.length === 0) {
+                    resultsDiv.innerHTML = '<p class="text-gray-500">No results found.</p>';
+                    return;
+                }
+
+                let html = '<div class="overflow-x-auto"><table class="min-w-full text-sm">';
+                html += '<thead class="bg-gray-100"><tr>';
+                Object.keys(data[0]).slice(0, 5).forEach(key => {
+                    html += `<th class="px-4 py-2 text-left">${key}</th>`;
+                });
+                html += '</tr></thead><tbody>';
+
+                data.forEach((row, i) => {
+                    html += `<tr class="${i % 2 ? 'bg-gray-50' : ''}">`;
+                    Object.values(row).slice(0, 5).forEach(val => {
+                        const displayVal = val ? String(val).substring(0, 50) : '-';
+                        html += `<td class="px-4 py-2">${displayVal}</td>`;
+                    });
+                    html += '</tr>';
+                });
+
+                html += '</tbody></table></div>';
+                html += `<p class="text-gray-500 text-sm mt-2">Showing ${data.length} results</p>`;
+                resultsDiv.innerHTML = html;
+            } catch (error) {
+                resultsDiv.innerHTML = `<p class="text-red-500">Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

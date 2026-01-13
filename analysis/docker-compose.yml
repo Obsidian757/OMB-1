@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  # Main web dashboard
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../data:/data:ro
+    environment:
+      - DATA_DIR=/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Jupyter notebook for interactive analysis
+  jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile.jupyter
+    ports:
+      - "8888:8888"
+    volumes:
+      - ../data:/data:ro
+      - ./notebooks:/app/notebooks
+    environment:
+      - DATA_DIR=/data
+    restart: unless-stopped
+
+volumes:
+  data:
+    driver: local
