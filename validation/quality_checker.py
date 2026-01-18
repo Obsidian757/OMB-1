@@ -202,6 +202,19 @@ class DataQualityChecker:
 
             report += "\n"
 
+        # Add enum violations if any
+        enum_violations = results.get('enum_violations', {})
+        if enum_violations:
+            report += "### Enum Constraint Violations\n\n"
+            report += "Fields with values outside allowed enums:\n\n"
+
+            for field, invalid_values in enum_violations.items():
+                report += f"**{field}:**\n"
+                for value, count in sorted(invalid_values.items(),
+                                          key=lambda x: x[1], reverse=True)[:5]:
+                    report += f"- `{value}`: {count} occurrences\n"
+                report += "\n"
+
         # Add top agencies
         agency_counts = stats.get('agency_counts', {})
         if agency_counts:
