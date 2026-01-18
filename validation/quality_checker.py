@@ -67,6 +67,7 @@ class DataQualityChecker:
         field_present = set()
         agency_counts = {}
         rights_impacting_count = 0
+        enum_violations = {}
 
         with open(csv_path, 'r', encoding='utf-8-sig') as f:
             reader = csv.DictReader(f)
@@ -89,6 +90,16 @@ class DataQualityChecker:
                 impact_type = row.get('17_impact_type', '').strip()
                 if 'Rights-Impacting' in impact_type or 'Safety-Impacting' in impact_type:
                     rights_impacting_count += 1
+
+                # Validate enum constraints
+                for field_name, constraints in self.field_constraints.items():
+                    if constraints['enum'] and field_name in row:
+                        value = row[field_name].strip()
+                        if value and value not in constraints['enum']:
+                            if field_name not in enum_violations:
+                                enum_violations[field_name] = {}
+                            enum_violations[field_name][value] = \
+                                enum_violations[field_name].get(value, 0) + 1
 
         # Calculate quality metrics
         missing_required_fields = [
@@ -120,7 +131,8 @@ class DataQualityChecker:
                 'rights_impacting_count': rights_impacting_count,
                 'agency_counts': dict(sorted(agency_counts.items(),
                                            key=lambda x: x[1], reverse=True))
-            }
+            },
+            'enum_violations': enum_violations
         }
 
     def generate_markdown_report(self, results: Dict[str, Any],
