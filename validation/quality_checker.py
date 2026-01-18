@@ -64,6 +64,8 @@ class DataQualityChecker:
         total_rows = 0
         missing_value_counts = {field: 0 for field in self.required_fields}
         field_present = set()
+        agency_counts = {}
+        rights_impacting_count = 0
 
         with open(csv_path, 'r', encoding='utf-8-sig') as f:
             reader = csv.DictReader(f)
@@ -76,6 +78,16 @@ class DataQualityChecker:
                 for field in self.required_fields:
                     if field in row and (not row[field] or row[field].strip() == ''):
                         missing_value_counts[field] += 1
+
+                # Track agency statistics
+                agency = row.get('3_agency', 'Unknown').strip()
+                if agency:
+                    agency_counts[agency] = agency_counts.get(agency, 0) + 1
+
+                # Track rights-impacting use cases
+                impact_type = row.get('17_impact_type', '').strip()
+                if 'Rights-Impacting' in impact_type or 'Safety-Impacting' in impact_type:
+                    rights_impacting_count += 1
 
         # Calculate quality metrics
         missing_required_fields = [
@@ -100,7 +112,14 @@ class DataQualityChecker:
             },
             'total_missing_values': total_missing_values,
             'completeness_score': round(completeness_score, 2),
-            'fields_present': len(field_present)
+            'fields_present': len(field_present),
+            'statistics': {
+                'total_agencies': len(agency_counts),
+                'total_use_cases': total_rows,
+                'rights_impacting_count': rights_impacting_count,
+                'agency_counts': dict(sorted(agency_counts.items(),
+                                           key=lambda x: x[1], reverse=True))
+            }
         }
 
 
@@ -132,6 +151,18 @@ def main():
             print(f"    {field}: {count} missing")
     else:
         print(f"\n✓ No missing values in required fields")
+
+    # Display statistics
+    stats = results.get('statistics', {})
+    print(f"\nSummary Statistics:")
+    print(f"  Total agencies: {stats.get('total_agencies', 0)}")
+    print(f"  Total use cases: {stats.get('total_use_cases', 0)}")
+    print(f"  Rights/Safety-impacting: {stats.get('rights_impacting_count', 0)}")
+
+    print(f"\nTop 5 Agencies by Use Cases:")
+    agency_counts = stats.get('agency_counts', {})
+    for i, (agency, count) in enumerate(list(agency_counts.items())[:5], 1):
+        print(f"  {i}. {agency}: {count}")
 
 
 if __name__ == "__main__":
