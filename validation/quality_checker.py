@@ -7,6 +7,7 @@ Validates CSV data against data dictionary and reports quality metrics.
 
 import csv
 import yaml
+import re
 from pathlib import Path
 from typing import Dict, List, Any
 from datetime import datetime
@@ -68,6 +69,12 @@ class DataQualityChecker:
         agency_counts = {}
         rights_impacting_count = 0
         enum_violations = {}
+        date_format_violations = {}
+
+        # Date fields that should follow MM/YYYY format
+        date_fields = ['18_date_initiated', '19_date_acq_dev_began',
+                      '20_date_implemented', '21_date_retired']
+        date_pattern = re.compile(r'^(0[1-9]|1[0-2])/\d{4}$')
 
         with open(csv_path, 'r', encoding='utf-8-sig') as f:
             reader = csv.DictReader(f)
@@ -101,6 +108,16 @@ class DataQualityChecker:
                             enum_violations[field_name][value] = \
                                 enum_violations[field_name].get(value, 0) + 1
 
+                # Validate date format (MM/YYYY)
+                for date_field in date_fields:
+                    if date_field in row:
+                        value = row[date_field].strip()
+                        if value and not date_pattern.match(value):
+                            if date_field not in date_format_violations:
+                                date_format_violations[date_field] = {}
+                            date_format_violations[date_field][value] = \
+                                date_format_violations[date_field].get(value, 0) + 1
+
         # Calculate quality metrics
         missing_required_fields = [
             field for field in self.required_fields
@@ -132,7 +149,8 @@ class DataQualityChecker:
                 'agency_counts': dict(sorted(agency_counts.items(),
                                            key=lambda x: x[1], reverse=True))
             },
-            'enum_violations': enum_violations
+            'enum_violations': enum_violations,
+            'date_format_violations': date_format_violations
         }
 
     def generate_markdown_report(self, results: Dict[str, Any],
