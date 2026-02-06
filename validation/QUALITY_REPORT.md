@@ -1,6 +1,6 @@
 # Data Quality Report
 
-**Generated:** 2026-01-18 10:54:31
+**Generated:** 2026-02-06 17:21:18
 
 ## Overall Quality Score: 99.1% - Grade A (Excellent)
 
@@ -138,6 +138,38 @@ Fields with values outside allowed enums:
 - `Planned`: 20 occurrences
 - `In production`: 14 occurrences
 - `In mission`: 4 occurrences
+
+### Date Format Violations
+
+Fields with invalid date formats (expected MM/YYYY):
+
+**18_date_initiated:** 1243 violations
+- `10/1/2023`: 38 occurrences
+- `10/1/2022`: 31 occurrences
+- `10/1/2024`: 28 occurrences
+- `7/1/2024`: 27 occurrences
+- `5/1/2024`: 24 occurrences
+
+**19_date_acq_dev_began:** 986 violations
+- `N/A`: 29 occurrences
+- `10/1/2024`: 24 occurrences
+- `1/1/2022`: 18 occurrences
+- `1/1/2024`: 17 occurrences
+- `10/1/2023`: 17 occurrences
+
+**21_date_retired:** 228 violations
+- `N/A`: 73 occurrences
+- `NA`: 20 occurrences
+- `10/1/2024`: 15 occurrences
+- `6/30/2023`: 10 occurrences
+- `N/A -Consolidated into another use case.`: 8 occurrences
+
+**20_date_implemented:** 710 violations
+- `N/A`: 38 occurrences
+- `10/1/2024`: 21 occurrences
+- `2/1/2024`: 15 occurrences
+- `3/14/2024`: 15 occurrences
+- `1/1/2024`: 12 occurrences
 
 ---
 

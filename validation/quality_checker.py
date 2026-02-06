@@ -233,6 +233,20 @@ class DataQualityChecker:
                     report += f"- `{value}`: {count} occurrences\n"
                 report += "\n"
 
+        # Add date format violations if any
+        date_format_violations = results.get('date_format_violations', {})
+        if date_format_violations:
+            report += "### Date Format Violations\n\n"
+            report += "Fields with invalid date formats (expected MM/YYYY):\n\n"
+
+            for field, invalid_values in date_format_violations.items():
+                total_violations = sum(invalid_values.values())
+                report += f"**{field}:** {total_violations} violations\n"
+                for value, count in sorted(invalid_values.items(),
+                                          key=lambda x: x[1], reverse=True)[:5]:
+                    report += f"- `{value}`: {count} occurrences\n"
+                report += "\n"
+
         # Add top agencies
         agency_counts = stats.get('agency_counts', {})
         if agency_counts:
