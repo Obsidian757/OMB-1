@@ -325,6 +325,20 @@ def main():
     for i, (agency, count) in enumerate(list(agency_counts.items())[:5], 1):
         print(f"  {i}. {agency}: {count}")
 
+    # Display date format violation summary
+    date_violations = results.get('date_format_violations', {})
+    if date_violations:
+        total_date_violations = sum(sum(violations.values())
+                                   for violations in date_violations.values())
+        print(f"\n⚠️  Date format violations detected:")
+        print(f"  Total: {total_date_violations} violations across {len(date_violations)} fields")
+        for field, violations in sorted(date_violations.items(),
+                                       key=lambda x: sum(x[1].values()), reverse=True):
+            field_total = sum(violations.values())
+            print(f"    {field}: {field_total} violations")
+    else:
+        print(f"\n✓ No date format violations")
+
     # Generate markdown report
     print(f"\nGenerating quality report...")
     report_path = checker.generate_markdown_report(results)
